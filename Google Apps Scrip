@@ -1,0 +1,304 @@
+function extractData(content, pattern) {
+  var match = content.match(pattern);
+  if (match && match[1]) {
+    return match[1].trim();
+  } else {
+    return '';
+  }
+}
+
+function osobaimienazwisko (html) {
+// Wyrażenie regularne do wyodrębnienia imienia z elementu o klasie "title"
+    //var imiePattern = /<div class="title">([^<]+)<\/div>/;
+    //var imiePattern = /<span>([^<]+)<\/span>\s*<span>([^<]+)<\/span>/;
+    //var imiePattern = /<div class="title">[\s\S]*?<span>([^<]+)<\/span>[\s\S]*?<span>([^<]+)<\/span>/;
+    //var regex = /<div class="title">[\s\S]*?<span>([^<]+)<\/span>\s*<span>([^<]+)<\/span>/;
+
+    var regex = /<div class="h3">(.*?)<\/div>/i;
+    //var regex = /<div class="h3">([\p{L}\s]+)<\/div>/ui;
+    var match = regex.exec(html);
+    var osoba = [];
+
+    if (match !== null) {
+      var imieINazwisko = match[1]; // Cały tekst wewnątrz taga <div class="h3">
+      //console.log(html);
+
+      // Teraz użyjemy wyrażenia regularnego, aby rozdzielić imię i nazwisko na podstawie spacji
+      var imieNazwiskoRegex = /^(\S+)(?:\s+(\S+))?\s+(\S+)$/;
+      var imieNazwiskoMatch = imieNazwiskoRegex.exec(imieINazwisko);
+
+      if (imieNazwiskoMatch !== null) {
+        var imie = imieNazwiskoMatch[1]; // Imię (Beata)
+        var drugieImie = imieNazwiskoMatch[2]; // Drugie imię (Maria)
+        var nazwisko = imieNazwiskoMatch[3]; // Nazwisko (Waszkiewicz)
+        osoba.push(imie);
+        //console.log("Imię:", imie);
+        if (drugieImie) {
+          osoba.push(drugieImie);        
+        }
+        osoba.push(nazwisko);        
+      } else {
+        console.log("Nie można rozdzielić imienia i nazwiska.");
+      }
+
+
+
+    } else {
+      console.log("Nie znaleziono tekstu w elemencie z klasą 'h3'.");
+    }
+
+ /* if (imieMatch) {
+      var imie = imieMatch[1];
+      console.log('Imię:', imie);
+      return imie || null;
+  }
+*/
+
+  return osoba || null;
+}
+
+function extractTelefon(html) {
+ // Usuń znaczniki HTML, spacje i niepotrzebne białe znaki
+  //const cleanedHtml = html.replace(/<\/?[^>]+(>|$)/g, '').replace(/\s+/g, ' ').trim();
+  // Wzorce RegExp do ekstrakcji danych
+  //const komorkowyPattern = /Komórkowy:(.*?)(?=(Email:))/s;
+  // Wyodrębnij dane za pomocą funkcji extractData i wzorców
+  //const adresKorespondencji = extractData(cleanedHtml, komorkowyPattern);
+  // Wyślij wyniki do konsoli
+
+    /*
+      var pattern = /<div class="info-with-icon phone">([^<]+)<\/div>/;
+      var match = html.match(pattern);
+
+      if (match) {
+          var telefon = match[1];
+          console.log(telefon);
+          return telefon || null;      
+      }
+    */
+      
+    var regex = /<p class="nag">(\d+)<\/p>/;
+    var match = regex.exec(html);
+
+    if (match !== null) {
+      var numer = match[1];
+      return numer || null; 
+    } else {
+      console.log('Nie znaleziono numeru.');
+    }
+  
+}
+
+function extractfax(html) {
+ // Usuń znaczniki HTML, spacje i niepotrzebne białe znaki
+  //const cleanedHtml = html.replace(/<\/?[^>]+(>|$)/g, '').replace(/\s+/g, ' ').trim();
+  // Wzorce RegExp do ekstrakcji danych
+  //const komorkowyPattern = /Komórkowy:(.*?)(?=(Email:))/s;
+  // Wyodrębnij dane za pomocą funkcji extractData i wzorców
+  //const adresKorespondencji = extractData(cleanedHtml, komorkowyPattern);
+  // Wyślij wyniki do konsoli
+
+  var pattern = /<div class="info-with-icon fax">([^<]+)<\/div>/;
+  var match = html.match(pattern);
+
+  if (match) {
+      var fax = match[1];
+      return fax || null;      
+  }
+}
+
+function konwertujDane(extractedData) {
+    // Usuń znaczniki <br/> i zamień je na spacje
+    var danePoKonwersji = extractedData.replace(/<br\s*\/?>/gi, ' ');
+
+    // Usuń dodatkowe spacje i znaki białe na początku i końcu tekstu
+    danePoKonwersji = danePoKonwersji.trim();
+
+    return danePoKonwersji;
+}
+
+function rozdzielNaLinie(danePoKonwersji) {
+    // Rozdziel dane na osobne linie
+    var linie = danePoKonwersji.split('\n');
+
+    // Usuń białe znaki na początku i końcu każdej linii oraz puste linie
+    linie = linie.map(function (linia) {
+        return linia.trim();
+    }).filter(function (linia) {
+        return linia.length > 0;
+    });
+
+    return linie;
+}
+
+function extractadres(html) {
+
+
+ // Usuń znaczniki HTML, spacje i niepotrzebne białe znaki
+  //const cleanedHtml = html.replace(/<\/?[^>]+(>|$)/g, '').replace(/\s+/g, ' ').trim();
+  //console.log('Adres: ', cleanedHtml); 
+
+  // Wzorce RegExp do ekstrakcji danych
+    const regex = /<div class="paragraf" id="lokalizacja">[^]*?<p[^>]*?>([^<]*)<\/p>[\s\S]*?<p>([^<]*)<br \/>([^<]*)<\/p>[\s\S]*?<\/div>/;
+    var match = regex.exec(html);
+    //console.log(match);
+    var partadres = [];
+    if (match !== null) {
+        if (match) {
+          var adresCzesc1 = match[1].trim(); // Pierwsza część adresu
+          var adresCzesc2 = match[2] ? match[2].trim() : ''; // Druga część adresu (opcjonalna)
+          var adresCzesc3 = match[3] ? match[3].trim() : ''; // Trzecia część adresu (opcjonalna)
+                  partadres.push(adresCzesc1);
+                  partadres.push(adresCzesc2);
+                  partadres.push(adresCzesc3);  
+        } else {
+          console.log('Nie można podzielić adresu.');
+        }
+        /*
+        if (adresyPodzielone.length === 2) {
+          var adresCzesc1 = adresyPodzielone[0].trim(); // Pierwsza część adresu
+          var adresCzesc2 = adresyPodzielone[1].trim(); // Druga część adresu
+          
+          partadres.push(adresCzesc1);
+          partadres.push(adresCzesc2);        
+
+        } else {
+          console.log('Nie można podzielić adresu na dwie części.');
+        } */
+
+      return partadres || null;
+
+      //console.log('Kod pocztowy:', kodPocztowy);
+      //console.log('Adres:', adres);
+    } else {
+      console.log('Nie znaleziono danych lokalizacji.');
+    }
+
+  /*
+
+  // Jeśli znaleziono pasujący fragment, wydrukuj adres
+  var matches = html.match(pattern);
+
+  if (matches && matches.length > 1) {
+      var extractedData = matches[1];
+      var danePoKonwersji = konwertujDane(extractedData);
+      var linie = rozdzielNaLinie(danePoKonwersji);
+      return linie || null;
+  }
+  */
+  // Wyodrębnij dane za pomocą funkcji extractData i wzorców
+  //const adresKorespondencji = extractData(cleanedHtml, adresPattern);
+  // Wyślij wyniki do konsoli
+  //return adresKorespondencji || null;
+}
+
+function wyodrebniAdresEmail(html) {
+  const regex = /<div class="paragraf" id="mail">\s*<p class="nag">([^<]+)<\/p>\s*<\/div>/g;
+  var adresyEmail = []; // Inicjalizacja pustej tablicy na adresy e-mail
+  var matches;
+
+  while ((matches = regex.exec(html)) !== null) {
+    var ea = matches[0];
+    var eb = matches[1].replace(/\s+/g, ''); // Usunięcie spacji z adresu email
+
+    // Dodaj adres e-mail do tablicy
+    adresyEmail.push(eb);
+  }
+  // Zwróć tablicę adresów e-mail po zakończeniu przeszukiwania HTML
+  return adresyEmail;
+}
+
+
+function randomDelay() {
+  var delayTime = Math.floor(Math.random() * 3000) + 1000; // Losowy czas od 100 do 1000 ms
+  Utilities.sleep(delayTime);
+}
+
+function przetwarzajDane(k, url, sheet) {
+
+    /*
+    var options = {
+      'headers': {
+        'Accept-Charset': 'UTF-8'
+      }
+    }; 
+
+    var response = UrlFetchApp.fetch(url, options);
+    */
+
+      // Wczytaj dane z URL
+    var response = UrlFetchApp.fetch(url);
+
+    // Pobierz zawartość odpowiedzi jako ciąg bajtów
+    var contentBytes = response.getContent();
+
+    // Konwertuj zawartość z ISO-8859-2 na UTF-8
+    var html = Utilities.newBlob(contentBytes).getDataAsString('ISO-8859-2');
+
+    // Teraz utf8Content zawiera dane w kodowaniu UTF-8
+
+    var linie = extractadres(html);
+    console.log('Adres: ', linie);
+    var telefon = extractTelefon(html);
+    console.log('Telefon: ', telefon);
+    var fax = extractfax(html);
+    console.log('Fax: ', fax);
+    var email = wyodrebniAdresEmail(html);
+    console.log(email);
+    var osoba = osobaimienazwisko(html);
+    console.log('Imie: ', osoba);
+
+    // Zapisz dane w kolejnych wierszach kolumn J, K i L
+/*
+    sheet.getRange("B" + k).setValue(linie[0]);
+    sheet.getRange("C" + k).setValue(linie[1]);
+    sheet.getRange("D" + k).setValue(linie[2]);
+    sheet.getRange("E" + k).setValue(linie[3]);
+    sheet.getRange("F" + k).setValue(linie[4]);
+*/
+    sheet.getRange("G" + k).setValue(telefon);
+    //sheet.getRange("H" + k).setValue(fax);
+    sheet.getRange("I" + k).setValue(email);
+    sheet.getRange("J" + k).setValue(osoba[0]);
+    sheet.getRange("K" + k).setValue(osoba[1]);
+    sheet.getRange("L" + k).setValue(osoba[2]);
+}
+
+function czyPoleJestPuste(id, sheet, k, url) {
+  // Ustal ID wiersza i literę kolumny
+  var wierszID = id+1;
+  var kolumnaLitera = 'J';
+  
+  var zawartosc = sheet.getRange(wierszID, sheet.getRange(kolumnaLitera + "1").getColumn()).getValue();
+  
+  if (zawartosc === "") {
+    Logger.log("Pole w wierszu " + wierszID + ", kolumnie " + kolumnaLitera + " jest puste.");
+    przetwarzajDane(k, url, sheet);
+  } else {
+    //Logger.log("Pole w wierszu " + wierszID + ", kolumnie " + kolumnaLitera + " nie jest puste. Zawartość: " + zawartosc);
+    //przetwarzajDane(k, url, sheet);
+  }
+}
+
+function fetchPageData() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var daneKolumnaD = sheet.getRange("A:A").getValues();
+
+  for (var i = 1; i <= 8990; i++) {
+
+    //randomDelay();
+
+    var url = daneKolumnaD[i][0];
+    //console.log('Url:', url);
+
+    try {
+      var k = i+1;
+
+      //console.log('Strona:', k);
+      czyPoleJestPuste(i, sheet, k, url);
+      
+    } catch (error) {
+      Logger.log('Wystąpił błąd podczas pobierania strony:', error);
+    }
+  }
+}
